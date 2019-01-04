@@ -1,0 +1,170 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
+from datetime import datetime
+from nltk.stem.snowball import SnowballStemmer
+stemmer = SnowballStemmer("english")
+from nltk.corpus import stopwords 
+stop_words = set(stopwords.words('english'))
+stopwords = ['our', 'did', 'same', 'those', 'be', 'both', "you'll", 're', 'at', 'hers', 'up', 'had', 'been', 'after', 'do', 'he', 'further', 'now', 'has', 'about', 'for', "needn't", 'here', 'will', "should've", 'couldn', 'am', 'have', 'yours', "you've", 'ma', 'his', "mustn't", 'how', 'o', 'each', 'whom', 'her', "she's", 'under', 've', 'by', 'down', "couldn't", 'm', 'd', 'were', 'she', 'isn', 'its', "you're", 'off', 'once', 'll', 'some', 'aren', 'their', 'himself', 'into', 'my', 'no', 'being', 'of', 'mightn', 'above', 'and', 'nor', 'shouldn', 'very', "haven't", 'which', "shan't", 'just', 'most', 'when', "isn't", 'weren', 'out', 'other', 'but', 'should', "it's", 'ours', 'hadn', 'ain', 'over', 'on', 'than', 'ourselves', 'there', 'wasn', 'are', 'yourselves', 'with', 'yourself', 'then', 'hasn', 'again', 'until', 'an', 'few', 'that', 'during', "hadn't", 'own', 'me', 'the', 'it', 'because', 'all', 'haven', 'while', 'only', 's', 'such', 'myself', 'shan', 'doing', 'y', "wasn't", "won't", 'as', "hasn't", 'through', 'they', 'we', 'if', 'not', 'where', 'this', 'i', 'before', "wouldn't", 'you', 'from', "weren't", 'to', 'herself', "didn't", 'who', 'having', 'theirs', "don't", "that'll", 'needn', 'too', 'any', 't', 'didn', 'itself', 'so', 'or', 'wouldn', 'in', 'themselves', 'why', 'don', 'doesn', "shouldn't", 'what', "you'd", 'a', 'mustn', 'was', 'below', 'your', "doesn't", 'won', 'them', 'these', 'more', "aren't", "mightn't", 'against', 'him', 'between', 'can', 'is', 'does']
+#Opens the file, converts the date to a datetime object and renames the columns.
+forklift =pd.read_csv("Forklifts.csv").drop(['Ref'], axis =1)
+pd.DataFrame.rename(forklift, columns = {"Date": "date", "Description": "description", "Is this incident Severe or High priority?": "priority", "Incident reported by": "reporter", "Location": "location", "Type of Incident":"incident"}, inplace = True)
+forklift["date"] = pd.to_datetime(forklift["date"])
+---------------------------------------------------------------------------
+ParserError                               Traceback (most recent call last)
+<ipython-input-2-6e7e73a2cf42> in <module>()
+      1 #Opens the file, converts the date to a datetime object and renames the columns.
+----> 2 forklift =pd.read_csv("Forklifts.csv").drop(['Ref'], axis =1)
+      3 pd.DataFrame.rename(forklift, columns = {"Date": "date", "Description": "description", "Is this incident Severe or High priority?": "priority", "Incident reported by": "reporter", "Location": "location", "Type of Incident":"incident"}, inplace = True)
+      4 forklift["date"] = pd.to_datetime(forklift["date"])
+
+~\Anaconda3.1\lib\site-packages\pandas\io\parsers.py in parser_f(filepath_or_buffer, sep, delimiter, header, names, index_col, usecols, squeeze, prefix, mangle_dupe_cols, dtype, engine, converters, true_values, false_values, skipinitialspace, skiprows, nrows, na_values, keep_default_na, na_filter, verbose, skip_blank_lines, parse_dates, infer_datetime_format, keep_date_col, date_parser, dayfirst, iterator, chunksize, compression, thousands, decimal, lineterminator, quotechar, quoting, escapechar, comment, encoding, dialect, tupleize_cols, error_bad_lines, warn_bad_lines, skipfooter, doublequote, delim_whitespace, low_memory, memory_map, float_precision)
+    676                     skip_blank_lines=skip_blank_lines)
+    677 
+--> 678         return _read(filepath_or_buffer, kwds)
+    679 
+    680     parser_f.__name__ = name
+
+~\Anaconda3.1\lib\site-packages\pandas\io\parsers.py in _read(filepath_or_buffer, kwds)
+    444 
+    445     try:
+--> 446         data = parser.read(nrows)
+    447     finally:
+    448         parser.close()
+
+~\Anaconda3.1\lib\site-packages\pandas\io\parsers.py in read(self, nrows)
+   1034                 raise ValueError('skipfooter not supported for iteration')
+   1035 
+-> 1036         ret = self._engine.read(nrows)
+   1037 
+   1038         # May alter columns / col_dict
+
+~\Anaconda3.1\lib\site-packages\pandas\io\parsers.py in read(self, nrows)
+   1846     def read(self, nrows=None):
+   1847         try:
+-> 1848             data = self._reader.read(nrows)
+   1849         except StopIteration:
+   1850             if self._first_chunk:
+
+pandas\_libs\parsers.pyx in pandas._libs.parsers.TextReader.read()
+
+pandas\_libs\parsers.pyx in pandas._libs.parsers.TextReader._read_low_memory()
+
+pandas\_libs\parsers.pyx in pandas._libs.parsers.TextReader._read_rows()
+
+pandas\_libs\parsers.pyx in pandas._libs.parsers.TextReader._tokenize_rows()
+
+pandas\_libs\parsers.pyx in pandas._libs.parsers.raise_parser_error()
+
+ParserError: Error tokenizing data. C error: Expected 1 fields in line 9, saw 2
+# Creates variables for day of the week and month of the year
+# Recodes the days of the week as strings
+# Creates a column for description words
+forklift["dow"] = forklift["date"].dt.dayofweek
+forklift["month"]= forklift["date"].dt.month
+forklift["dow"] = forklift["dow"].replace({0:"Monday", 1:"Tuesday", 2:"Wednsday", 3:"Thursday", 4:"Friday", 5:"Saturday", 6:"Sunday"})
+forklift['month'] = forklift['month'].replace({1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "Augugst", 9: "September", 10: "October", 11: "November", 12: "December"})
+forklift['desc_words'] = "NA"
+""" Needs to display only values greater than 50 """
+# Bar Chart of locations with most frequent 
+forklift['location'].value_counts().plot.bar();
+#Normalizes data
+forklift["desc_words"] = [i.lower().split() for i in forklift["description"]]
+forklift["des_words"] = [j for j in forklift["desc_words"] if j not in set(stop_words)]
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+<ipython-input-429-3197c1bfe52f> in <module>()
+      1 #Normalizes data
+      2 forklift["desc_words"] = [i.lower().split() for i in forklift["description"]]
+----> 3 forklift["des_words"] = [j for j in forklift["desc_words"] if j not in set(stop_words)]
+
+<ipython-input-429-3197c1bfe52f> in <listcomp>(.0)
+      1 #Normalizes data
+      2 forklift["desc_words"] = [i.lower().split() for i in forklift["description"]]
+----> 3 forklift["des_words"] = [j for j in forklift["desc_words"] if j not in set(stop_words)]
+
+TypeError: unhashable type: 'list'
+forklift = forklift.drop(["description"], axis = 1)
+N = forklift.shape[0]
+row=[]
+df = pd.DataFrame()
+for i in range(N):
+    value1 = forklift.iloc[i,0]
+    value2 = forklift.iloc[i,7]
+    row.append([value1,value2])
+temp=pd.DataFrame(row,columns=['location','desc_words'])
+df = pd.concat([df,temp],axis=0)
+df.head(5)
+    
+print(rows)
+forklift.head(100)
+print(type(forklift['desc_words'][0][0]))
+row1=forklift[['location','desc_words']]
+r = row1.iloc[0,0]
+r
+words = row1.iloc[0,1]
+words
+rows = []
+M = forklift.shape[0]
+for i in range(M):
+    value = forklift.iloc[i,0]
+    value2 = forklift.iloc[i,7]
+    N = len(value2)
+    for j in range(N):
+        value3 = value2[j]
+        rows.append([value,value3])
+words1 = pd.DataFrame(rows, columns=['location', 'desc_words'])
+words1.head(100)  
+rows = []
+for row in forklift[['location', 'desc_words']].iterrows():
+    r = row[]
+    words = row[1]
+    N = len(words)
+    for i in range(N):
+        word = words[i]
+        rows.append([r,word])
+    
+    
+ #   for word in r.desc_words:
+  #      rows.append((r.location, r.desc_words))
+words1 = pd.DataFrame(rows, columns=['location', 'desc_words'])
+words1.head(100)    
+counts = words1.groupby('location')\
+    .desc_words.value_counts()\
+    .to_frame()\
+    .rename(columns={'desc_words':'wc'})
+counts.head(-200)
+def pretty_plot_top_n(series, index_level=0):
+    r = series\
+    .groupby(level=index_level)\
+    .nlargest(top_n)\
+    .reset_index(level=index_level, drop=True)
+    r.plot.bar()
+    return r.to_frame()
+
+
+#pretty_plot_top_n(counts['word count'])
+word_sum = counts.groupby(level=0)\
+    .sum()\
+    .rename(columns = {"wc":"lc"})
+word_sum
+tf = counts.join(word_sum)
+tf['tf'] = tf.wc/ tf.lc
+tf.head
+c_d = words1.location.nunique()
+c_d
+idf = words1.groupby('desc_words')\
+    .location\
+    .nunique()\
+    .to_frame()\
+    .rename(columns={'location':'i_d'})\
+    .sort_values('i_d')
+#idf.head()
+idf['idf'] = np.log(c_d/idf.i_d.values)
+tf_idf = tf.join(idf)
+tf_idf['tf_idf'] = tf_idf.tf * tf_idf.idf
+tf_idf.head
+tf_idf.to_csv("forklifttfidf.csv")
+pretty_plot_top_n(tf_idf['tf_idf'])
